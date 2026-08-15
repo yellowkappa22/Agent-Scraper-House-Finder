@@ -33,6 +33,8 @@ scraped-data/
 .idea/
 .vscode/
 .DS_Store
+node_modules/
+.wrangler/
 AGENTS.md
 .agents/
 .codex/
