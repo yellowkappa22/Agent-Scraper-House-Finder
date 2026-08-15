@@ -1,0 +1,47 @@
+{
+  "couples": {
+    "positive": [
+      "couple",
+      "couples",
+      "double occupancy",
+      "two people"
+    ],
+    "negative": [
+      "no couple",
+      "no couples",
+      "not suitable for couples",
+      "single occupancy",
+      "single occupant",
+      "one person only"
+    ]
+  },
+  "self_contained": {
+    "positive": [
+      "self-contained",
+      "self contained",
+      "studio",
+      "flat",
+      "apartment",
+      "bungalow",
+      "private kitchen",
+      "own kitchen"
+    ],
+    "negative": [
+      "not self-contained",
+      "not self contained",
+      "house share",
+      "shared house",
+      "shared accommodation",
+      "room in a shared",
+      "room to let",
+      "room available",
+      "shared apartment",
+      "shared kitchen",
+      "shared bathroom",
+      "co-living",
+      "flatshare",
+      "housemates",
+      "lodger"
+    ]
+  }
+}
