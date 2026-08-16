@@ -16,6 +16,8 @@ const state = {
   maxRent: Infinity,
   showHandled: false,
   resultTab: "couples",
+  sortOrder: "recent",
+  processStatuses: new Set(),
   messages: loadSavedMessages(),
 };
 
@@ -58,6 +60,24 @@ const SHORTLIST_STATUSES = new Set([
   "viewing_confirmed",
   "waiting_for_selection",
 ]);
+
+function archivedLabel(property) {
+  const value = property.archived ?? property.first_qualified_at;
+  const timestamp = Date.parse(value);
+  if (!Number.isFinite(timestamp)) return "";
+  return `Archived ${new Date(timestamp).toLocaleString("en-GB", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  })}`;
+}
+
+function sortProperties(properties) {
+  return properties.sort((a, b) => {
+    if (state.sortOrder === "rent") return a.rent - b.rent || a.id.localeCompare(b.id);
+    const recent = Date.parse(b.archived ?? b.first_qualified_at) - Date.parse(a.archived ?? a.first_qualified_at);
+    return (Number.isFinite(recent) && recent !== 0) ? recent : a.rent - b.rent;
+  });
+}
 
 const STAGE_LABELS = {
   in_process: "In process",
@@ -115,6 +135,7 @@ function propertyCard(property) {
     <div class="property-facts">
       ${fact(property.bike_minutes, "min cycle")}
       ${fact(property.bike_distance_km, "km")}
+      ${archivedLabel(property) ? `<span>${escapeHtml(archivedLabel(property))}</span>` : ""}
       ${property.couples_supported ? "<span>Couples supported</span>" : ""}
       ${property.self_contained ? "<span>Self-contained</span>" : ""}
     </div>
@@ -123,6 +144,11 @@ function propertyCard(property) {
       <a href="${escapeHtml(property.link)}" target="_blank" rel="noopener noreferrer">Advert ↗</a>
       ${actions(property)}
     </div>
+    ${SHORTLIST_STATUSES.has(property.status) ? `
+      <label class="property-note">
+        <span>Shared note</span>
+        <textarea data-note rows="1" maxlength="2000" placeholder="Add a note…">${escapeHtml(property.note)}</textarea>
+      </label>` : ""}
   `;
   article.querySelectorAll("[data-status]").forEach((button) => {
     button.addEventListener("click", () => updateStatus(property.id, button.dataset.status, button));
@@ -133,6 +159,15 @@ function propertyCard(property) {
   article.querySelector("[data-view-message]")?.addEventListener("click", () => {
     openMessage(property.id);
   });
+  const note = article.querySelector("[data-note]");
+  if (note) {
+    expandNote(note);
+    note.addEventListener("input", () => {
+      property.note = note.value;
+      expandNote(note);
+      queueNoteSave(property.id, note.value);
+    });
+  }
   article.querySelector("[data-message]")?.addEventListener("click", (event) => {
     generateMessage(property.id, event.currentTarget);
   });
@@ -162,14 +197,15 @@ function fill(container, properties, emptyMessage) {
 }
 
 function render() {
-  const properties = visibleProperties().sort((a, b) => a.rent - b.rent || a.id.localeCompare(b.id));
+  const properties = sortProperties(visibleProperties());
   const fresh = properties.filter((property) => property.status === "new");
   const couples = fresh.filter((property) => property.couples_supported);
   const selfContained = fresh.filter(
     (property) => !property.couples_supported && property.self_contained,
   );
   const process = properties.filter((property) =>
-    SHORTLIST_STATUSES.has(property.status)
+    SHORTLIST_STATUSES.has(property.status) &&
+    (!state.processStatuses.size || state.processStatuses.has(property.status))
   );
   const handled = properties.filter((property) => ["ignored", "failed"].includes(property.status));
   const selectedResults = state.resultTab === "couples" ? couples : selfContained;
@@ -178,7 +214,7 @@ function render() {
     : "No new self-contained properties.";
 
   fill(elements.fresh, selectedResults, emptyMessage);
-  fill(elements.process, process, "Move a property here when you want to pursue it.");
+  fill(elements.process, process, "No shortlisted properties match these statuses.");
   fill(elements.handled, handled, "No ignored or failed properties.");
 
   document.querySelector("#couples-count").textContent = couples.length;
@@ -191,6 +227,31 @@ function render() {
     tab.setAttribute("aria-selected", String(active));
   });
   elements.handledSection.classList.toggle("hidden", !state.showHandled);
+}
+
+const noteTimers = new Map();
+
+function expandNote(note) {
+  note.style.height = "auto";
+  note.style.height = `${note.scrollHeight}px`;
+}
+
+function queueNoteSave(id, note) {
+  clearTimeout(noteTimers.get(id));
+  noteTimers.set(id, setTimeout(() => saveNote(id, note), 600));
+}
+
+async function saveNote(id, note) {
+  try {
+    const response = await fetch(`/api/properties/${encodeURIComponent(id)}/note`, {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ note }),
+    });
+    if (!response.ok) throw new Error("Note save failed");
+  } catch {
+    showError("The note could not be saved. Please try again.");
+  }
 }
 
 async function updateStatus(id, status, button) {
@@ -279,6 +340,21 @@ document.querySelector("#search").addEventListener("input", (event) => {
 document.querySelector("#rent-filter").addEventListener("change", (event) => {
   state.maxRent = Number(event.target.value);
   render();
+});
+
+document.querySelector("#sort-order").addEventListener("change", (event) => {
+  state.sortOrder = event.target.value;
+  render();
+});
+
+document.querySelectorAll("[data-process-status]").forEach((checkbox) => {
+  checkbox.addEventListener("change", () => {
+    state.processStatuses = new Set(
+      [...document.querySelectorAll("[data-process-status]:checked")]
+        .map((item) => item.value),
+    );
+    render();
+  });
 });
 
 document.querySelectorAll("[data-result-tab]").forEach((tab) => {

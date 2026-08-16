@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { generateMessage, getProperties, messageInstructions, setStatus } from "../src/index.js";
+import { generateMessage, getProperties, messageInstructions, setNote, setStatus } from "../src/index.js";
 
 test("properties merge Gold with persistent D1 status", async () => {
   const env = {
@@ -112,4 +112,35 @@ test("message instructions constrain personalisation to one short general senten
   assert.match(instructions, /Keep the body under 90 words/);
   assert.match(instructions, /one simple, general sentence of no more than 15 words/);
   assert.match(instructions, /Never paraphrase room layouts or chain advert features together/);
+});
+
+test("notes are stored separately without changing property status", async () => {
+  const calls = [];
+  const env = {
+    DB: {
+      prepare: (sql) => ({
+        bind: (...values) => ({
+          run: async () => calls.push({ sql, values }),
+        }),
+      }),
+    },
+  };
+  const request = new Request("https://example.test", {
+    method: "PUT",
+    body: JSON.stringify({ note: "Check this one" }),
+  });
+  const response = await setNote(request, env, "spareroom:1");
+  assert.equal(response.status, 200);
+  assert.match(calls[0].sql, /INSERT INTO property_notes/);
+  assert.deepEqual(calls[0].values.slice(0, 2), ["spareroom:1", "Check this one"]);
+  assert.doesNotMatch(calls[0].sql, /property_status/);
+});
+
+test("overlong notes are rejected before writing to D1", async () => {
+  const request = new Request("https://example.test", {
+    method: "PUT",
+    body: JSON.stringify({ note: "x".repeat(2001) }),
+  });
+  const response = await setNote(request, {}, "spareroom:1");
+  assert.equal(response.status, 400);
 });

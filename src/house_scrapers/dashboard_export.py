@@ -25,6 +25,7 @@ DASHBOARD_PROPERTY_FIELDS = frozenset(
         "couples_supported",
         "self_contained",
         "first_qualified_at",
+        "archived",
     }
 )
 
@@ -95,6 +96,7 @@ def _dashboard_property(listing: Mapping[str, object]) -> dict[str, object]:
         "bike_distance_km": bike_distance_km,
         "couples_supported": couples_supported,
         "self_contained": self_contained,
+        "archived": _text(listing.get("archived"), "archived"),
         "first_qualified_at": _text(
             listing.get("first_qualified_at"), "first_qualified_at"
         ),

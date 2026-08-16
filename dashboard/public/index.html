@@ -37,6 +37,13 @@
             <option value="1200">Up to £1,200</option>
           </select>
         </label>
+        <label>
+          <span>Rank by</span>
+          <select id="sort-order">
+            <option value="recent">Newest first</option>
+            <option value="rent">Lowest rent</option>
+          </select>
+        </label>
         <button id="show-handled" class="quiet-button" type="button">Show history</button>
       </section>
 
@@ -70,6 +77,13 @@
             </div>
             <span id="process-count" class="count">0</span>
           </div>
+          <fieldset class="process-filters">
+            <legend>Filter shortlist status</legend>
+            <label><input type="checkbox" value="in_process" data-process-status> In process</label>
+            <label><input type="checkbox" value="contacted" data-process-status> Contacted</label>
+            <label><input type="checkbox" value="viewing_confirmed" data-process-status> Viewing</label>
+            <label><input type="checkbox" value="waiting_for_selection" data-process-status> Waiting</label>
+          </fieldset>
           <div id="process-results" class="card-list"></div>
         </section>
       </section>

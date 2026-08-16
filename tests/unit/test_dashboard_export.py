@@ -19,6 +19,7 @@ def gold_listing(source, link, *, couples=True, self_contained=False, rent=900):
         "description": "Public description",
         "currently_eligible": True,
         "first_qualified_at": "2026-08-15T15:00:00Z",
+        "archived": "2026-08-16T09:30:00Z",
         "metadata": {
             "source": source,
             "secret": "must-not-leak",

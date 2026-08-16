@@ -183,6 +183,35 @@ a:focus-visible {
   top: 20px;
 }
 
+.process-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin: 0;
+  padding: 12px 26px;
+  border: 0;
+  border-bottom: 1px solid #e2ded4;
+  color: #62685f;
+  font-size: 0.72rem;
+}
+
+.process-filters legend {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.process-filters label { white-space: nowrap; }
+.process-filters input { width: auto; min-height: auto; }
+
+#process-results {
+  max-height: calc(100vh - 245px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
 .section-heading {
   display: flex;
   align-items: center;
@@ -325,6 +354,31 @@ a:focus-visible {
 .card-actions button:disabled {
   cursor: wait;
   opacity: 0.55;
+}
+
+.property-note {
+  display: grid;
+  gap: 6px;
+  margin-top: 14px;
+  color: #676d64;
+  font-size: 0.7rem;
+  font-weight: 750;
+}
+
+.property-note textarea {
+  width: 100%;
+  min-height: 38px;
+  padding: 9px 11px;
+  resize: none;
+  overflow: hidden;
+  border: 1px solid #d4d0c6;
+  border-radius: 9px;
+  outline: none;
+  background: #faf8f2;
+  color: #343832;
+  font: inherit;
+  font-weight: 500;
+  line-height: 1.35;
 }
 
 .empty {
@@ -540,6 +594,10 @@ a:focus-visible {
     align-items: start;
     flex-direction: column;
     padding-top: 38px;
+  }
+
+  #process-results {
+    max-height: 70vh;
   }
 
   .dashboard-grid {

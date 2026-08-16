@@ -45,19 +45,35 @@ async function readStatuses(env) {
   );
 }
 
+async function readNotes(env) {
+  const result = await env.DB.prepare(
+    "SELECT property_id, note, updated_at FROM property_notes",
+  ).all();
+  return new Map(
+    result.results.map((row) => [
+      row.property_id,
+      { note: row.note, updated_at: row.updated_at },
+    ]),
+  );
+}
+
 async function getProperties(env) {
-  const [snapshot, statuses] = await Promise.all([
+  const [snapshot, statuses, notes] = await Promise.all([
     readProperties(env),
     readStatuses(env),
+    readNotes(env),
   ]);
   return {
     generated_at: snapshot.generated_at,
     properties: snapshot.properties.map((property) => {
       const saved = statuses.get(property.id);
+      const savedNote = notes.get(property.id);
       return {
         ...property,
         status: saved?.status ?? "new",
         status_updated_at: saved?.updated_at ?? null,
+        note: savedNote?.note ?? "",
+        note_updated_at: savedNote?.updated_at ?? null,
       };
     }),
   };
@@ -87,6 +103,34 @@ async function setStatus(request, env, propertyId) {
     .bind(propertyId, body.status, updatedAt)
     .run();
   return json({ id: propertyId, status: body.status, updated_at: updatedAt });
+}
+
+async function setNote(request, env, propertyId) {
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: "Request body must be JSON" }, { status: 400 });
+  }
+  if (typeof body?.note !== "string" || body.note.length > 2000) {
+    return json({ error: "Note must be text up to 2000 characters" }, { status: 400 });
+  }
+  const note = body.note.trim();
+  const updatedAt = new Date().toISOString();
+  if (!note) {
+    await env.DB.prepare("DELETE FROM property_notes WHERE property_id = ?")
+      .bind(propertyId)
+      .run();
+    return json({ id: propertyId, note: "", updated_at: updatedAt });
+  }
+  await env.DB.prepare(
+    `INSERT INTO property_notes (property_id, note, updated_at)
+     VALUES (?, ?, ?)
+     ON CONFLICT(property_id) DO UPDATE SET
+       note = excluded.note,
+       updated_at = excluded.updated_at`,
+  ).bind(propertyId, note, updatedAt).run();
+  return json({ id: propertyId, note, updated_at: updatedAt });
 }
 
 const SIGNATURE = "Best regards,\nKasper Pettersson";
@@ -187,6 +231,16 @@ export default {
       }
     }
 
+    const noteMatch = url.pathname.match(/^\/api\/properties\/([^/]+)\/note$/);
+    if (request.method === "PUT" && noteMatch) {
+      try {
+        return await setNote(request, env, decodeURIComponent(noteMatch[1]));
+      } catch (error) {
+        console.error("Unable to save property note", error);
+        return json({ error: "Unable to save note" }, { status: 503 });
+      }
+    }
+
     const messageMatch = url.pathname.match(/^\/api\/properties\/([^/]+)\/message$/);
     if (request.method === "POST" && messageMatch) {
       try {
@@ -205,4 +259,4 @@ export default {
   },
 };
 
-export { generateMessage, getProperties, messageInstructions, setStatus };
+export { generateMessage, getProperties, messageInstructions, setNote, setStatus };
