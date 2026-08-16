@@ -40,7 +40,19 @@ main {
   align-items: end;
   justify-content: space-between;
   gap: 2rem;
-  padding: 56px 0 30px;
+  min-height: 310px;
+  margin-top: 24px;
+  padding: 42px;
+  border-radius: 28px;
+  background:
+    linear-gradient(90deg, rgba(19, 27, 21, 0.76), rgba(19, 27, 21, 0.2)),
+    url("/oxford-city.webp") center 45% / cover;
+  color: white;
+  box-shadow: 0 18px 50px rgba(36, 40, 33, 0.16);
+}
+
+main {
+  margin-top: 20px;
 }
 
 h1,
@@ -79,7 +91,7 @@ h2 {
   align-items: center;
   flex-shrink: 0;
   gap: 8px;
-  color: #62685f;
+  color: rgba(255, 255, 255, 0.88);
   font-size: 0.82rem;
 }
 
@@ -92,6 +104,10 @@ h2 {
 }
 
 .toolbar {
+.site-header .eyebrow {
+  color: rgba(255, 255, 255, 0.8);
+}
+
   display: flex;
   align-items: end;
   gap: 12px;
@@ -343,7 +359,6 @@ a:focus-visible {
   display: none !important;
 }
 
-@media (max-width: 900px) {
 .tab-heading {
   display: block;
   padding-bottom: 0;
@@ -351,6 +366,7 @@ a:focus-visible {
 
 .result-tabs {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin-top: 8px;
 }
@@ -360,17 +376,19 @@ a:focus-visible {
   align-items: center;
   gap: 8px;
   padding: 12px 14px;
-  border: 0;
-  border-bottom: 3px solid transparent;
-  background: transparent;
+  border: 1px solid #d6d2c8;
+  border-radius: 11px;
+  background: #f4f2ec;
   color: #747a71;
   font-family: Georgia, "Times New Roman", serif;
   font-size: 1.15rem;
 }
 
 .result-tab.active {
-  border-bottom-color: #3f5a3b;
-  color: #20231f;
+  border-color: #3f5a3b;
+  background: #3f5a3b;
+  color: white;
+  box-shadow: 0 6px 16px rgba(63, 90, 59, 0.2);
 }
 
 .tab-count {
@@ -381,6 +399,11 @@ a:focus-visible {
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
   font-size: 0.68rem;
   font-weight: 800;
+}
+
+.result-tab.active .tab-count {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
 }
 
 .stage-select {
@@ -433,6 +456,7 @@ a:focus-visible {
   color: #7c4038;
 }
 
+@media (max-width: 900px) {
   .site-header {
     align-items: start;
     flex-direction: column;

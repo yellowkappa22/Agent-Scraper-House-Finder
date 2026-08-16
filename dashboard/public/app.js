@@ -37,12 +37,11 @@ function fact(value, suffix) {
   return Number.isFinite(value) ? `<span>${escapeHtml(value)} ${suffix}</span>` : "";
 }
 
-const PROCESS_STATUSES = new Set([
+const SHORTLIST_STATUSES = new Set([
   "in_process",
   "contacted",
   "viewing_confirmed",
   "waiting_for_selection",
-  "failed",
 ]);
 
 const STAGE_LABELS = {
@@ -54,7 +53,7 @@ const STAGE_LABELS = {
 };
 
 function actions(property) {
-  if (PROCESS_STATUSES.has(property.status)) {
+  if (SHORTLIST_STATUSES.has(property.status)) {
     const options = Object.entries(STAGE_LABELS)
       .map(([value, label]) => `
         <option value="${value}" ${property.status === value ? "selected" : ""}>
@@ -67,12 +66,13 @@ function actions(property) {
         <select data-stage>${options}</select>
       </label>
       <button class="danger" data-status="ignored">Ignore</button>
+      <button data-status="new">Return to results</button>
       <button data-message>Generate message</button>
     `;
   }
-  if (property.status === "ignored") {
+  if (property.status === "ignored" || property.status === "failed") {
     return `
-      <button data-status="new">Restore</button>
+      <button class="primary" data-status="new">Restore to results</button>
       <button data-message>Generate message</button>
     `;
   }
@@ -146,8 +146,10 @@ function render() {
   const selfContained = fresh.filter(
     (property) => !property.couples_supported && property.self_contained,
   );
-  const process = properties.filter((property) => PROCESS_STATUSES.has(property.status));
-  const handled = properties.filter((property) => property.status === "ignored");
+  const process = properties.filter((property) =>
+    SHORTLIST_STATUSES.has(property.status)
+  );
+  const handled = properties.filter((property) => ["ignored", "failed"].includes(property.status));
   const selectedResults = state.resultTab === "couples" ? couples : selfContained;
   const emptyMessage = state.resultTab === "couples"
     ? "No new couples-supported properties."
@@ -155,7 +157,7 @@ function render() {
 
   fill(elements.fresh, selectedResults, emptyMessage);
   fill(elements.process, process, "Move a property here when you want to pursue it.");
-  fill(elements.handled, handled, "No ignored properties.");
+  fill(elements.handled, handled, "No ignored or failed properties.");
 
   document.querySelector("#couples-count").textContent = couples.length;
   document.querySelector("#self-contained-count").textContent = selfContained.length;
@@ -237,7 +239,7 @@ document.querySelectorAll("[data-result-tab]").forEach((tab) => {
 
 document.querySelector("#show-handled").addEventListener("click", (event) => {
   state.showHandled = !state.showHandled;
-  event.currentTarget.textContent = state.showHandled ? "Hide handled" : "Show handled";
+  event.currentTarget.textContent = state.showHandled ? "Hide history" : "Show history";
   render();
 });
 
