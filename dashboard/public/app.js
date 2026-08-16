@@ -66,20 +66,20 @@ function actions(property) {
         <select data-stage>${options}</select>
       </label>
       <button class="danger" data-status="ignored">Ignore</button>
-      <button data-status="new">Return to results</button>
-      <button data-message>Generate message</button>
+      <button data-status="new">Return</button>
+      <button data-message>Message</button>
     `;
   }
   if (property.status === "ignored" || property.status === "failed") {
     return `
-      <button class="primary" data-status="new">Restore to results</button>
-      <button data-message>Generate message</button>
+      <button class="primary" data-status="new">Restore</button>
+      <button data-message>Message</button>
     `;
   }
   return `
     <button class="danger" data-status="ignored">Ignore</button>
-    <button class="primary" data-status="in_process">Move to in process</button>
-    <button data-message>Generate message</button>
+    <button class="primary" data-status="in_process">Shortlist</button>
+    <button data-message>Message</button>
   `;
 }
 
@@ -101,7 +101,7 @@ function propertyCard(property) {
     </div>
     <p class="description">${escapeHtml(property.description)}</p>
     <div class="card-actions">
-      <a href="${escapeHtml(property.link)}" target="_blank" rel="noopener noreferrer">View advert ↗</a>
+      <a href="${escapeHtml(property.link)}" target="_blank" rel="noopener noreferrer">Advert ↗</a>
       ${actions(property)}
     </div>
   `;

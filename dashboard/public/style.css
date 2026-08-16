@@ -103,11 +103,11 @@ h2 {
   box-shadow: 0 0 0 4px rgba(84, 116, 75, 0.12);
 }
 
-.toolbar {
 .site-header .eyebrow {
-  color: rgba(255, 255, 255, 0.8);
+  color: #fff;
 }
 
+.toolbar {
   display: flex;
   align-items: end;
   gap: 12px;
@@ -278,8 +278,10 @@ a:focus-visible {
 }
 
 .card-actions {
-  gap: 8px;
+  flex-wrap: nowrap;
+  gap: 6px;
   margin-top: 18px;
+  overflow-x: auto;
 }
 
 .card-actions button,
@@ -294,6 +296,7 @@ a:focus-visible {
   font-size: 0.76rem;
   font-weight: 750;
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .card-actions a {
@@ -408,8 +411,10 @@ a:focus-visible {
 
 .stage-select {
   display: flex;
+  flex: 1 1 170px;
   align-items: center;
   gap: 7px;
+  min-width: 150px;
   min-height: 38px;
   padding-left: 10px;
   border: 1px solid #a9b5a4;
@@ -425,6 +430,8 @@ a:focus-visible {
 }
 
 .stage-select select {
+  width: 100%;
+  min-width: 0;
   min-height: 36px;
   border: 0;
   background: transparent;
@@ -498,7 +505,7 @@ a:focus-visible {
 
   .card-actions button,
   .card-actions a {
-    flex: 1;
+    flex: 0 0 auto;
     justify-content: center;
   }
 }
