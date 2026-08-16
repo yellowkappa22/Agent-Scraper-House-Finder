@@ -51,7 +51,8 @@ Postcodes.io. Imprecise locations are marked unavailable rather than guessed.
 
 Filter II reads `MAX_BIKE_DURATION_MINUTES` from `.env` and defaults to
 `50`. Listings above the limit are rejected; listings exactly at the limit or
-without a bicycle duration continue to classification.
+without a bicycle duration continue only when their advertised postcode begins
+with `OX`.
 
 The intake stage deliberately does not filter house shares, couples, or eligibility. Results must have an Oxfordshire `OX` postcode where the source is not already geographically constrained, must not match an excluded location, and must have a non-empty full description.
 
@@ -185,6 +186,9 @@ DailyInfo, Finders, OnTheMarket, and SpareRoom use Requests rather than a browse
 Every saved Finders offer includes `metadata.source: "finders"`, full postcode and coordinates, creation time, and responsible branch contact details. Its addresses use `property title — full address`.
 
 Every saved OnTheMarket offer includes `metadata.source: "onthemarket"` and, when published, nested responsible-agent `name`, `address`, and `phone` fields. Addresses use `property title — advertised address`.
+When no complete postcode is published, enrichment may route from an advertised
+`OX` outcode centroid (for example `OX3`). Such locations are explicitly
+stored with `method: "postcode_outcode"` and `approximate: true`.
 
 Every saved DailyInfo offer includes `metadata.source: "dailyinfo"`; map-enabled adverts also include `postcode`, `latitude`, and `longitude`.
 

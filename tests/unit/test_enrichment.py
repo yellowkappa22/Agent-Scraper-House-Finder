@@ -87,6 +87,25 @@ def test_structured_couples_yes_overrides_negative_description_text():
     assert result["couples_allowed"] is True
     assert result["couples_reason"] == "metadata:couples_allowed=true"
 
+def test_coordinates_use_approximate_outcode_when_full_postcode_is_missing():
+    listing = {
+        "address": "Two bedroom flat — Headington, Oxford",
+        "description": "The property is situated near London Road, OX3.",
+        "metadata": {"source": "onthemarket"},
+    }
+    session = Session(
+        [{"status": 200, "result": {"latitude": 51.761, "longitude": -1.21}}]
+    )
+
+    assert get_coordinates(listing, session) == {
+        "latitude": 51.761,
+        "longitude": -1.21,
+        "method": "postcode_outcode",
+        "postcode": "OX3",
+        "approximate": True,
+    }
+    assert session.calls == [("GET", "https://api.postcodes.io/outcodes/OX3")]
+
 def test_coordinates_prefer_source_metadata_without_network():
     listing = {"metadata": {"latitude": 51.7, "longitude": -1.2}}
     session = Session([])

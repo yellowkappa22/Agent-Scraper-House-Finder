@@ -344,6 +344,95 @@ a:focus-visible {
 }
 
 @media (max-width: 900px) {
+.tab-heading {
+  display: block;
+  padding-bottom: 0;
+}
+
+.result-tabs {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.result-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  color: #747a71;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.15rem;
+}
+
+.result-tab.active {
+  border-bottom-color: #3f5a3b;
+  color: #20231f;
+}
+
+.tab-count {
+  min-width: 25px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #e7eadf;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.stage-select {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 38px;
+  padding-left: 10px;
+  border: 1px solid #a9b5a4;
+  border-radius: 9px;
+  background: #edf2ea;
+  color: #384435;
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.stage-select span {
+  text-transform: uppercase;
+}
+
+.stage-select select {
+  min-height: 36px;
+  border: 0;
+  background: transparent;
+  font-size: 0.76rem;
+  font-weight: 750;
+}
+
+.stage-select.contacted {
+  border-color: #9aafd0;
+  background: #edf3fb;
+  color: #314d75;
+}
+
+.stage-select.viewing_confirmed {
+  border-color: #b3a2cb;
+  background: #f3eef9;
+  color: #57416f;
+}
+
+.stage-select.waiting_for_selection {
+  border-color: #d1b478;
+  background: #fbf4e5;
+  color: #705724;
+}
+
+.stage-select.failed {
+  border-color: #cf9f98;
+  background: #faeeec;
+  color: #7c4038;
+}
+
   .site-header {
     align-items: start;
     flex-direction: column;
@@ -353,7 +442,6 @@ a:focus-visible {
   .dashboard-grid {
     grid-template-columns: 1fr;
   }
-
   .process-section {
     position: static;
     grid-row: 1;

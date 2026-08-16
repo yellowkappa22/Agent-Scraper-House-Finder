@@ -3,11 +3,11 @@ const state = {
   search: "",
   maxRent: Infinity,
   showHandled: false,
+  resultTab: "couples",
 };
 
 const elements = {
-  couples: document.querySelector("#couples-results"),
-  selfContained: document.querySelector("#self-contained-results"),
+  fresh: document.querySelector("#new-results"),
   process: document.querySelector("#process-results"),
   handled: document.querySelector("#handled-results"),
   handledSection: document.querySelector("#handled-section"),
@@ -37,15 +37,40 @@ function fact(value, suffix) {
   return Number.isFinite(value) ? `<span>${escapeHtml(value)} ${suffix}</span>` : "";
 }
 
+const PROCESS_STATUSES = new Set([
+  "in_process",
+  "contacted",
+  "viewing_confirmed",
+  "waiting_for_selection",
+  "failed",
+]);
+
+const STAGE_LABELS = {
+  in_process: "In process",
+  contacted: "Contacted",
+  viewing_confirmed: "Viewing confirmed",
+  waiting_for_selection: "Waiting for selection",
+  failed: "Failed",
+};
+
 function actions(property) {
-  if (property.status === "in_process") {
+  if (PROCESS_STATUSES.has(property.status)) {
+    const options = Object.entries(STAGE_LABELS)
+      .map(([value, label]) => `
+        <option value="${value}" ${property.status === value ? "selected" : ""}>
+          ${label}
+        </option>`)
+      .join("");
     return `
+      <label class="stage-select ${property.status}">
+        <span>Stage</span>
+        <select data-stage>${options}</select>
+      </label>
       <button class="danger" data-status="ignored">Ignore</button>
-      <button class="primary" data-status="contacted">Contacted</button>
       <button data-message>Generate message</button>
     `;
   }
-  if (property.status === "contacted" || property.status === "ignored") {
+  if (property.status === "ignored") {
     return `
       <button data-status="new">Restore</button>
       <button data-message>Generate message</button>
@@ -83,6 +108,9 @@ function propertyCard(property) {
   article.querySelectorAll("[data-status]").forEach((button) => {
     button.addEventListener("click", () => updateStatus(property.id, button.dataset.status, button));
   });
+  article.querySelector("[data-stage]")?.addEventListener("change", (event) => {
+    updateStatus(property.id, event.target.value, event.target);
+  });
   article.querySelector("[data-message]")?.addEventListener("click", () => {
     showToast("Message generation will be connected in a later step.");
   });
@@ -118,20 +146,26 @@ function render() {
   const selfContained = fresh.filter(
     (property) => !property.couples_supported && property.self_contained,
   );
-  const process = properties.filter((property) => property.status === "in_process");
-  const handled = properties.filter(
-    (property) => property.status === "contacted" || property.status === "ignored",
-  );
+  const process = properties.filter((property) => PROCESS_STATUSES.has(property.status));
+  const handled = properties.filter((property) => property.status === "ignored");
+  const selectedResults = state.resultTab === "couples" ? couples : selfContained;
+  const emptyMessage = state.resultTab === "couples"
+    ? "No new couples-supported properties."
+    : "No new self-contained properties.";
 
-  fill(elements.couples, couples, "No new couples-supported properties.");
-  fill(elements.selfContained, selfContained, "No new self-contained properties.");
+  fill(elements.fresh, selectedResults, emptyMessage);
   fill(elements.process, process, "Move a property here when you want to pursue it.");
-  fill(elements.handled, handled, "No handled properties.");
+  fill(elements.handled, handled, "No ignored properties.");
 
   document.querySelector("#couples-count").textContent = couples.length;
   document.querySelector("#self-contained-count").textContent = selfContained.length;
   document.querySelector("#process-count").textContent = process.length;
   document.querySelector("#handled-count").textContent = handled.length;
+  document.querySelectorAll("[data-result-tab]").forEach((tab) => {
+    const active = tab.dataset.resultTab === state.resultTab;
+    tab.classList.toggle("active", active);
+    tab.setAttribute("aria-selected", String(active));
+  });
   elements.handledSection.classList.toggle("hidden", !state.showHandled);
 }
 
@@ -192,6 +226,13 @@ document.querySelector("#search").addEventListener("input", (event) => {
 document.querySelector("#rent-filter").addEventListener("change", (event) => {
   state.maxRent = Number(event.target.value);
   render();
+});
+
+document.querySelectorAll("[data-result-tab]").forEach((tab) => {
+  tab.addEventListener("click", () => {
+    state.resultTab = tab.dataset.resultTab;
+    render();
+  });
 });
 
 document.querySelector("#show-handled").addEventListener("click", (event) => {

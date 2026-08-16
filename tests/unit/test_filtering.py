@@ -1,7 +1,9 @@
 from house_scrapers.filtering import filter_listings, update_gold
 
 
-def listing(*, bike_minutes=None, couples=False, self_contained=False):
+def listing(
+    *, bike_minutes=None, couples=False, self_contained=False, address="Oxford OX1"
+):
     enrichment = {
         "classification": {
             "couples_allowed": couples,
@@ -10,7 +12,11 @@ def listing(*, bike_minutes=None, couples=False, self_contained=False):
     }
     if bike_minutes is not None:
         enrichment["bike_route"] = {"duration_minutes": bike_minutes}
-    return {"link": f"https://example.test/{bike_minutes}-{couples}-{self_contained}", "enrichment": enrichment}
+    return {
+        "link": f"https://example.test/{bike_minutes}-{couples}-{self_contained}",
+        "address": address,
+        "enrichment": enrichment,
+    }
 
 
 def test_over_limit_is_excluded():
@@ -27,6 +33,15 @@ def test_missing_and_boundary_duration_proceed():
     couples, self_contained = filter_listings([at_boundary, missing], 50)
     assert couples == [at_boundary]
     assert self_contained == [missing]
+
+def test_missing_route_requires_ox_postcode():
+    oxford = listing(couples=True, address="Headington, Oxford OX3")
+    faringdon = listing(couples=True, address="Cromwell Close, Faringdon, SN7")
+
+    couples, self_contained = filter_listings([oxford, faringdon], 50)
+
+    assert couples == [oxford]
+    assert self_contained == []
 
 
 def test_couples_result_takes_precedence_over_self_contained():

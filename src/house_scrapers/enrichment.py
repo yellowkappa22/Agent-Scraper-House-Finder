@@ -23,6 +23,8 @@ RAW_BLOBS = (
 )
 ENRICHED_BLOB = "enriched/properties.json"
 POSTCODES_URL = "https://api.postcodes.io/postcodes"
+OUTCODES_URL = "https://api.postcodes.io/outcodes"
+OUTCODE_RE = re.compile(r"\b(OX\d{1,2}[A-Z]?)\b", re.IGNORECASE)
 ROUTES_URL = "https://api.openrouteservice.org/v2/directions/cycling-regular/json"
 POSTCODE_RE = re.compile(r"\b([A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2})\b", re.IGNORECASE)
 ROUTE_INTERVAL_SECONDS = 1.6
@@ -156,6 +158,21 @@ def complete_postcode(listing: Mapping[str, object]) -> str | None:
     return None
 
 
+def outward_postcode(listing: Mapping[str, object]) -> str | None:
+    metadata = listing.get("metadata")
+    candidates = []
+    if isinstance(metadata, Mapping):
+        candidates.append(metadata.get("postcode"))
+    candidates.extend((listing.get("address"), listing.get("description")))
+    for candidate in candidates:
+        if not isinstance(candidate, str):
+            continue
+        match = OUTCODE_RE.search(candidate)
+        if match:
+            return match.group(1).upper()
+
+    return None
+
 def get_coordinates(
     listing: Mapping[str, object], session: requests.Session
 ) -> dict[str, object] | None:
@@ -172,8 +189,18 @@ def get_coordinates(
 
     postcode = complete_postcode(listing)
     if postcode is None:
-        return None
-    response = session.get(f"{POSTCODES_URL}/{postcode.replace(' ', '')}", timeout=20)
+        metadata = listing.get("metadata")
+        source = metadata.get("source") if isinstance(metadata, Mapping) else None
+        postcode = outward_postcode(listing) if source == "onthemarket" else None
+        if postcode is None:
+            return None
+        response = session.get(f"{OUTCODES_URL}/{postcode}", timeout=20)
+        method = "postcode_outcode"
+    else:
+        response = session.get(
+            f"{POSTCODES_URL}/{postcode.replace(' ', '')}", timeout=20
+        )
+        method = "postcode"
     response.raise_for_status()
     result = response.json().get("result")
     if not isinstance(result, Mapping):
@@ -185,8 +212,9 @@ def get_coordinates(
     return {
         "latitude": latitude,
         "longitude": longitude,
-        "method": "postcode",
+        "method": method,
         "postcode": postcode,
+        **({"approximate": True} if method == "postcode_outcode" else {}),
     }
 
 
@@ -226,13 +254,17 @@ def enrich_listing(
 ) -> dict[str, object]:
     item = copy.deepcopy(dict(listing))
     classification = classify_listing(listing)
-    postcode = complete_postcode(listing)
-    if postcode and postcode in postcode_cache:
-        location = postcode_cache[postcode]
+    metadata = listing.get("metadata")
+    source = metadata.get("source") if isinstance(metadata, Mapping) else None
+    location_key = complete_postcode(listing)
+    if location_key is None and source == "onthemarket":
+        location_key = outward_postcode(listing)
+    if location_key and location_key in postcode_cache:
+        location = postcode_cache[location_key]
     else:
         location = get_coordinates(listing, session)
-        if postcode:
-            postcode_cache[postcode] = location
+        if location_key:
+            postcode_cache[location_key] = location
 
     if location is None:
         item["enrichment"] = {

@@ -5,7 +5,7 @@ from collections.abc import Iterable, Mapping
 
 from dotenv import load_dotenv
 
-from house_scrapers.enrichment import ENRICHED_BLOB
+from house_scrapers.enrichment import ENRICHED_BLOB, outward_postcode
 from house_scrapers.storage import archived_timestamp, open_offer_store
 
 COUPLES_RESULTS_BLOB = "gold/couples_results.json"
@@ -25,6 +25,8 @@ def filter_listings(
             continue
         route = enrichment.get("bike_route")
         duration = route.get("duration_minutes") if isinstance(route, Mapping) else None
+        if duration is None and not (outward_postcode(listing) or "").startswith("OX"):
+            continue
         if isinstance(duration, (int, float)) and duration > max_bike_minutes:
             continue
 

@@ -11,8 +11,8 @@
   <body>
     <header class="site-header">
       <div>
-        <p class="eyebrow">Oxford housing search</p>
-        <h1>Good places, clearly sorted.</h1>
+        <p class="eyebrow">Agent Scraper House Finder</p>
+        <h1>Oxford housing search</h1>
       </div>
       <div class="snapshot">
         <span class="live-dot"></span>
@@ -43,29 +43,24 @@
       <div id="error" class="notice hidden" role="alert"></div>
 
       <section class="dashboard-grid">
-        <div class="result-column">
-          <section class="result-section">
-            <div class="section-heading">
-              <div>
-                <p class="eyebrow">New matches</p>
-                <h2>Couples supported</h2>
+        <section class="result-section">
+          <div class="section-heading tab-heading">
+            <div>
+              <p class="eyebrow">New matches</p>
+              <div class="result-tabs" role="tablist" aria-label="Result type">
+                <button class="result-tab active" type="button" role="tab"
+                        aria-selected="true" data-result-tab="couples">
+                  Couples supported <span id="couples-count" class="tab-count">0</span>
+                </button>
+                <button class="result-tab" type="button" role="tab"
+                        aria-selected="false" data-result-tab="self_contained">
+                  Self-contained <span id="self-contained-count" class="tab-count">0</span>
+                </button>
               </div>
-              <span id="couples-count" class="count">0</span>
             </div>
-            <div id="couples-results" class="card-list"></div>
-          </section>
-
-          <section class="result-section">
-            <div class="section-heading">
-              <div>
-                <p class="eyebrow">New matches</p>
-                <h2>Self-contained</h2>
-              </div>
-              <span id="self-contained-count" class="count">0</span>
-            </div>
-            <div id="self-contained-results" class="card-list"></div>
-          </section>
-        </div>
+          </div>
+          <div id="new-results" class="card-list"></div>
+        </section>
 
         <section class="result-section process-section">
           <div class="section-heading">
@@ -83,7 +78,7 @@
         <div class="section-heading">
           <div>
             <p class="eyebrow">History</p>
-            <h2>Contacted & ignored</h2>
+            <h2>Ignored properties</h2>
           </div>
           <span id="handled-count" class="count">0</span>
         </div>

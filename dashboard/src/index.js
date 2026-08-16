@@ -1,4 +1,7 @@
-const ALLOWED_STATUSES = new Set(["new", "in_process", "contacted", "ignored"]);
+const ALLOWED_STATUSES = new Set([
+  "new", "in_process", "contacted", "viewing_confirmed",
+  "waiting_for_selection", "failed", "ignored",
+]);
 
 function json(data, init = {}) {
   return Response.json(data, {
@@ -62,7 +65,7 @@ async function setStatus(request, env, propertyId) {
   }
   if (!ALLOWED_STATUSES.has(body?.status)) {
     return json(
-      { error: "Status must be new, in_process, contacted, or ignored" },
+      { error: "Invalid property status" },
       { status: 400 },
     );
   }
