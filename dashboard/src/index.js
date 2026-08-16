@@ -1,3 +1,10 @@
+import {
+  couplesExamples,
+  couplesPrompt,
+  selfContainedExamples,
+  selfContainedPrompt,
+} from "./prompts.js";
+
 const ALLOWED_STATUSES = new Set([
   "new", "in_process", "contacted", "viewing_confirmed",
   "waiting_for_selection", "failed", "ignored",
@@ -82,6 +89,66 @@ async function setStatus(request, env, propertyId) {
   return json({ id: propertyId, status: body.status, updated_at: updatedAt });
 }
 
+function responseText(response) {
+  if (typeof response.output_text === "string" && response.output_text.trim()) {
+    return response.output_text.trim();
+  }
+  return (response.output ?? [])
+    .flatMap((item) => item.content ?? [])
+    .filter((item) => item.type === "output_text")
+    .map((item) => item.text)
+    .join("\n")
+    .trim();
+}
+
+function messageInstructions(property) {
+  const couples = property.couples_supported === true;
+  const selfContained = property.self_contained === true;
+  if (!couples && !selfContained) return null;
+  const prompt = couples ? couplesPrompt : selfContainedPrompt;
+  const examples = couples ? couplesExamples : selfContainedExamples;
+  if (!examples.length) return prompt;
+  return `${prompt}\n\nExamples of the desired style:\n${examples
+    .map((example, index) => `Example ${index + 1}:\n${example}`)
+    .join("\n\n")}`;
+}
+
+async function generateMessage(env, propertyId, fetchImpl = fetch) {
+  if (!env.OPENAI_API_KEY) {
+    return json({ error: "Message generation is not configured" }, { status: 503 });
+  }
+  const snapshot = await readProperties(env);
+  const property = snapshot.properties.find((item) => item.id === propertyId);
+  if (!property) return json({ error: "Property not found" }, { status: 404 });
+  const instructions = messageInstructions(property);
+  if (!instructions) {
+    return json({ error: "Property is not eligible for message generation" }, { status: 400 });
+  }
+
+  const listing = [
+    `Listing heading/address: ${String(property.address ?? "").slice(0, 1000)}`,
+    `Listing description: ${String(property.description ?? "").slice(0, 12000)}`,
+  ].join("\n\n");
+  const openaiResponse = await fetchImpl("https://api.openai.com/v1/responses", {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${env.OPENAI_API_KEY}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "gpt-5.6-luna",
+      reasoning: { effort: "low" },
+      max_output_tokens: 350,
+      instructions,
+      input: listing,
+    }),
+  });
+  if (!openaiResponse.ok) throw new Error(`OpenAI request failed: ${openaiResponse.status}`);
+  const message = responseText(await openaiResponse.json());
+  if (!message) throw new Error("OpenAI returned an empty message");
+  return json({ message });
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -109,6 +176,16 @@ export default {
       }
     }
 
+    const messageMatch = url.pathname.match(/^\/api\/properties\/([^/]+)\/message$/);
+    if (request.method === "POST" && messageMatch) {
+      try {
+        return await generateMessage(env, decodeURIComponent(messageMatch[1]));
+      } catch (error) {
+        console.error("Unable to generate property message", error);
+        return json({ error: "Unable to generate message" }, { status: 503 });
+      }
+    }
+
     if (url.pathname.startsWith("/api/")) {
       return json({ error: "Not found" }, { status: 404 });
     }
@@ -117,4 +194,4 @@ export default {
   },
 };
 
-export { getProperties, setStatus };
+export { generateMessage, getProperties, messageInstructions, setStatus };

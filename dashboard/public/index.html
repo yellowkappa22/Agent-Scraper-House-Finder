@@ -87,5 +87,18 @@
     </main>
 
     <div id="toast" class="toast hidden" role="status"></div>
+    <dialog id="message-dialog" class="message-dialog">
+      <form method="dialog" class="message-dialog-card">
+        <div class="message-dialog-heading">
+          <h2>Generated message</h2>
+          <button class="dialog-close" value="close" aria-label="Close">×</button>
+        </div>
+        <textarea id="generated-message" rows="10" aria-label="Generated message"></textarea>
+        <div class="message-dialog-actions">
+          <button id="copy-message" class="primary" type="button">Copy message</button>
+          <button value="close">Close</button>
+        </div>
+      </form>
+    </dialog>
   </body>
 </html>

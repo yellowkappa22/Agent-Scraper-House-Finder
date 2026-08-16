@@ -1,9 +1,22 @@
+function loadSavedMessages() {
+  try {
+    return JSON.parse(localStorage.getItem("housing-generated-messages") ?? "{}") ?? {};
+  } catch {
+    return {};
+  }
+}
+
+function saveMessages(messages) {
+  localStorage.setItem("housing-generated-messages", JSON.stringify(messages));
+}
+
 const state = {
   properties: [],
   search: "",
   maxRent: Infinity,
   showHandled: false,
   resultTab: "couples",
+  messages: loadSavedMessages(),
 };
 
 const elements = {
@@ -13,6 +26,8 @@ const elements = {
   handledSection: document.querySelector("#handled-section"),
   error: document.querySelector("#error"),
   toast: document.querySelector("#toast"),
+  messageDialog: document.querySelector("#message-dialog"),
+  generatedMessage: document.querySelector("#generated-message"),
 };
 
 function escapeHtml(value) {
@@ -53,6 +68,9 @@ const STAGE_LABELS = {
 };
 
 function actions(property) {
+  const viewMessage = state.messages[property.id]
+    ? `<button class="message-view" data-view-message title="View generated message" aria-label="View generated message">👁</button>`
+    : "";
   if (SHORTLIST_STATUSES.has(property.status)) {
     const options = Object.entries(STAGE_LABELS)
       .map(([value, label]) => `
@@ -68,6 +86,7 @@ function actions(property) {
       <button class="danger" data-status="ignored">Ignore</button>
       <button data-status="new">Return</button>
       <button data-message>Message</button>
+      ${viewMessage}
     `;
   }
   if (property.status === "ignored" || property.status === "failed") {
@@ -111,8 +130,11 @@ function propertyCard(property) {
   article.querySelector("[data-stage]")?.addEventListener("change", (event) => {
     updateStatus(property.id, event.target.value, event.target);
   });
-  article.querySelector("[data-message]")?.addEventListener("click", () => {
-    showToast("Message generation will be connected in a later step.");
+  article.querySelector("[data-view-message]")?.addEventListener("click", () => {
+    openMessage(property.id);
+  });
+  article.querySelector("[data-message]")?.addEventListener("click", (event) => {
+    generateMessage(property.id, event.currentTarget);
   });
   return article;
 }
@@ -190,6 +212,35 @@ async function updateStatus(id, status, button) {
   }
 }
 
+function openMessage(id) {
+  const message = state.messages[id];
+  if (!message) return;
+  elements.generatedMessage.value = message;
+  elements.messageDialog.showModal();
+}
+
+async function generateMessage(id, button) {
+  button.disabled = true;
+  const label = button.textContent;
+  button.textContent = "Writing…";
+  try {
+    const response = await fetch(`/api/properties/${encodeURIComponent(id)}/message`, {
+      method: "POST",
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error ?? "Message generation failed");
+    state.messages[id] = data.message;
+    saveMessages(state.messages);
+    render();
+    openMessage(id);
+  } catch (error) {
+    showError(error.message || "The message could not be generated. Please try again.");
+  } finally {
+    button.disabled = false;
+    button.textContent = label;
+  }
+}
+
 function showError(message) {
   elements.error.textContent = message;
   elements.error.classList.remove("hidden");
@@ -244,3 +295,8 @@ document.querySelector("#show-handled").addEventListener("click", (event) => {
 });
 
 loadProperties();
+
+document.querySelector("#copy-message").addEventListener("click", async () => {
+  await navigator.clipboard.writeText(elements.generatedMessage.value);
+  showToast("Message copied.");
+});
