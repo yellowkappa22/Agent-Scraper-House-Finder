@@ -18,3 +18,10 @@ def test_refresh_all_command(monkeypatch):
     monkeypatch.setattr("house_scrapers.pipeline.run_full", lambda: calls.append("full"))
     assert main(["refresh-all"]) == 0
     assert calls == ["full"]
+
+
+def test_export_dashboard_command(monkeypatch):
+    calls = []
+    monkeypatch.setattr("house_scrapers.dashboard_export.run", lambda: calls.append("export"))
+    assert main(["export-dashboard"]) == 0
+    assert calls == ["export"]

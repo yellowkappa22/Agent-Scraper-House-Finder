@@ -4,7 +4,7 @@ import argparse
 from collections.abc import Sequence
 
 SCRAPERS = ("dailyinfo", "finders", "onthemarket", "spareroom")
-COMMANDS = (*SCRAPERS, "enrich-bike", "filter-results", "pipeline", "refresh-all")
+COMMANDS = (*SCRAPERS, "enrich-bike", "filter-results", "export-dashboard", "pipeline", "refresh-all")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -42,6 +42,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         run()
     elif args.scraper == "filter-results":
         from house_scrapers.filtering import run
+        run()
+    elif args.scraper == "export-dashboard":
+        from house_scrapers.dashboard_export import run
         run()
     elif args.scraper == "refresh-all":
         from house_scrapers.pipeline import run_full

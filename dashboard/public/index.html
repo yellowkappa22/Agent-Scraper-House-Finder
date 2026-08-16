@@ -3,14 +3,94 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Housing Dashboard</title>
+    <meta name="theme-color" content="#f4f1ea">
+    <title>Oxford Housing</title>
     <link rel="stylesheet" href="/style.css">
     <script src="/app.js" defer></script>
   </head>
   <body>
+    <header class="site-header">
+      <div>
+        <p class="eyebrow">Oxford housing search</p>
+        <h1>Good places, clearly sorted.</h1>
+      </div>
+      <div class="snapshot">
+        <span class="live-dot"></span>
+        <span id="snapshot-time">Loading latest results…</span>
+      </div>
+    </header>
+
     <main>
-      <h1>Housing Dashboard</h1>
-      <p id="status">Application is running.</p>
+      <section class="toolbar" aria-label="Dashboard controls">
+        <label class="search">
+          <span>Search</span>
+          <input id="search" type="search" placeholder="Address, source or description">
+        </label>
+        <label>
+          <span>Maximum rent</span>
+          <select id="rent-filter">
+            <option value="Infinity">Any rent</option>
+            <option value="800">Up to £800</option>
+            <option value="900">Up to £900</option>
+            <option value="1000">Up to £1,000</option>
+            <option value="1100">Up to £1,100</option>
+            <option value="1200">Up to £1,200</option>
+          </select>
+        </label>
+        <button id="show-handled" class="quiet-button" type="button">Show handled</button>
+      </section>
+
+      <div id="error" class="notice hidden" role="alert"></div>
+
+      <section class="dashboard-grid">
+        <div class="result-column">
+          <section class="result-section">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">New matches</p>
+                <h2>Couples supported</h2>
+              </div>
+              <span id="couples-count" class="count">0</span>
+            </div>
+            <div id="couples-results" class="card-list"></div>
+          </section>
+
+          <section class="result-section">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">New matches</p>
+                <h2>Self-contained</h2>
+              </div>
+              <span id="self-contained-count" class="count">0</span>
+            </div>
+            <div id="self-contained-results" class="card-list"></div>
+          </section>
+        </div>
+
+        <section class="result-section process-section">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Your shortlist</p>
+              <h2>In process</h2>
+            </div>
+            <span id="process-count" class="count">0</span>
+          </div>
+          <div id="process-results" class="card-list"></div>
+        </section>
+      </section>
+
+      <section id="handled-section" class="result-section handled-section hidden">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">History</p>
+            <h2>Contacted & ignored</h2>
+          </div>
+          <span id="handled-count" class="count">0</span>
+        </div>
+        <div id="handled-results" class="card-list compact"></div>
+      </section>
     </main>
+
+    <div id="toast" class="toast hidden" role="status"></div>
   </body>
 </html>

@@ -12,6 +12,7 @@ def test_pipeline_runs_scrapers_then_enrichment():
         ("spareroom", lambda: calls.append("spareroom")),
         ("enrichment", lambda: calls.append("enrichment")),
         ("filtering", lambda: calls.append("filtering")),
+        ("dashboard export", lambda: calls.append("dashboard export")),
     )
 
     run(steps)
@@ -23,6 +24,7 @@ def test_pipeline_runs_scrapers_then_enrichment():
         "spareroom",
         "enrichment",
         "filtering",
+        "dashboard export",
     ]
 
 

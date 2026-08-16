@@ -11,7 +11,8 @@ src/house_scrapers/
   storage.py              # shared managed-identity Blob persistence
   enrichment.py           # coordinate and bicycle-route enrichment
   filtering.py            # Filter II result selection
-  pipeline.py             # scrapers followed by enrichment
+  dashboard_export.py     # sanitized current Gold snapshot for R2
+  pipeline.py             # complete Bronze-to-Gold pipeline and export
   data/keywords.json      # versioned classification vocabulary
   scrapers/dailyinfo.py   # Daily Info-specific implementation
   scrapers/finders.py     # Finders-specific implementation
@@ -63,6 +64,7 @@ python -m house_scrapers dailyinfo
 python -m house_scrapers spareroom
 python -m house_scrapers enrich-bike
 python -m house_scrapers filter-results
+python -m house_scrapers export-dashboard
 python -m house_scrapers pipeline
 python -m house_scrapers refresh-all
 ```
@@ -98,6 +100,83 @@ couples-supported, including those also classified as self-contained.
 self-contained without couples support. Canonical links are registered once,
 `first_qualified_at` is preserved, and `currently_eligible` controls whether
 the website displays an old result.
+
+## Dashboard snapshot
+
+Azure Blob Storage remains the canonical Gold history. After Gold filtering,
+the pipeline optionally combines all records whose `currently_eligible` value
+is `true`, validates them, and overwrites the dashboard snapshot at
+`housing-gold/current.json` in Cloudflare R2. The upload is disabled unless
+`R2_EXPORT_ENABLED=true`; local tests therefore need no R2 credentials.
+
+The public document has this schema:
+
+```json
+{
+  "generated_at": "UTC ISO-8601 timestamp",
+  "properties": [{
+    "id": "source:source-listing-id",
+    "address": "string",
+    "rent": 1000,
+    "link": "https://...",
+    "description": "string",
+    "source": "spareroom",
+    "bike_minutes": 15.0,
+    "bike_distance_km": 4.2,
+    "couples_supported": true,
+    "self_contained": false,
+    "first_qualified_at": "UTC ISO-8601 timestamp"
+  }]
+}
+```
+
+Bike fields are `null` when routing was unavailable. Internal metadata,
+classification reasons, debug values, and credentials are never exported.
+
+On the VM, R2 credentials remain root-readable at
+`/etc/housing-dashboard/r2.env`. Make the existing systemd service load that
+file before it switches to `User=azureuser` by adding this override:
+
+```bash
+sudo systemctl edit house-scraper@.service
+```
+
+```ini
+[Service]
+EnvironmentFile=/etc/housing-dashboard/r2.env
+Environment=R2_EXPORT_ENABLED=true
+```
+
+Then apply it with `sudo systemctl daemon-reload`. Do not copy these variables
+into the repository or the project `.env`. The hourly `pipeline` service needs
+no separate R2 timer: export is its final step and is reached only after Gold
+The Cloudflare Worker in `dashboard/` reads `current.json` through its
+`GOLD` R2 binding and merges each property with human workflow state stored
+in the `DB` D1 binding. The responsive frontend separates new
+couples-supported and self-contained results, ranks them by rent, and keeps an
+independent in-process shortlist. Contacted and ignored properties remain in
+D1 history and are hidden by default, so a later Gold refresh does not make
+them appear as new again. The Generate message button is currently a
+placeholder.
+
+The D1 schema must be applied once before deployment:
+
+```bash
+cd dashboard
+npm install
+npm run db:migrate
+npm test
+npm run check
+npm run deploy
+```
+
+These commands require Node.js 22 or newer, and remote migration/deployment
+requires Wrangler authentication. Alternatively, run the contents of
+`dashboard/migrations/0001_property_status.sql` once in the
+`housing-dashboard-db` D1 console. Cloudflare Access should protect the
+dashboard because its API includes status-changing endpoints.
+
+generation and validation succeed.
 
 Use `python -m house_scrapers --list` to list scrapers. Accepted properties are written to the Bronze blobs at `<scraper>/properties.json`; existing registered listings are skipped. Every stored record has an `archived` UTC ISO-8601 timestamp. A complete `scrape_all` refresh also maintains `active`, `last_seen`, and `inactive_at` without deleting historical records. Partial `scrape_new_today` runs never deactivate unseen records.
 

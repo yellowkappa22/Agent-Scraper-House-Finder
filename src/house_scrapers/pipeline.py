@@ -7,6 +7,7 @@ Step = tuple[str, Callable[[], None]]
 
 
 def default_steps() -> tuple[Step, ...]:
+    from house_scrapers.dashboard_export import run as export_dashboard
     from house_scrapers.enrichment import run as enrich
     from house_scrapers.filtering import run as filter_results
     from house_scrapers.scrapers.dailyinfo import run as dailyinfo
@@ -21,6 +22,7 @@ def default_steps() -> tuple[Step, ...]:
         ("spareroom", spareroom),
         ("enrichment", enrich),
         ("filtering", filter_results),
+        ("dashboard export", export_dashboard),
     )
 
 

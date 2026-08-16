@@ -1,16 +1,203 @@
-const status = document.querySelector("#status");
+const state = {
+  properties: [],
+  search: "",
+  maxRent: Infinity,
+  showHandled: false,
+};
 
-fetch("/api/health")
-  .then((response) => {
-    if (!response.ok) {
-      throw new Error("Health check failed");
-    }
-    return response.json();
-  })
-  .then((health) => {
-    status.textContent =
-      health.status === "ok" ? "Application is running." : "Application is unavailable.";
-  })
-  .catch(() => {
-    status.textContent = "Application is unavailable.";
+const elements = {
+  couples: document.querySelector("#couples-results"),
+  selfContained: document.querySelector("#self-contained-results"),
+  process: document.querySelector("#process-results"),
+  handled: document.querySelector("#handled-results"),
+  handledSection: document.querySelector("#handled-section"),
+  error: document.querySelector("#error"),
+  toast: document.querySelector("#toast"),
+};
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function formatSource(source) {
+  return {
+    dailyinfo: "Daily Info",
+    finders: "Finders",
+    onthemarket: "OnTheMarket",
+    spareroom: "SpareRoom",
+  }[source] ?? source;
+}
+
+function fact(value, suffix) {
+  return Number.isFinite(value) ? `<span>${escapeHtml(value)} ${suffix}</span>` : "";
+}
+
+function actions(property) {
+  if (property.status === "in_process") {
+    return `
+      <button class="danger" data-status="ignored">Ignore</button>
+      <button class="primary" data-status="contacted">Contacted</button>
+      <button data-message>Generate message</button>
+    `;
+  }
+  if (property.status === "contacted" || property.status === "ignored") {
+    return `
+      <button data-status="new">Restore</button>
+      <button data-message>Generate message</button>
+    `;
+  }
+  return `
+    <button class="danger" data-status="ignored">Ignore</button>
+    <button class="primary" data-status="in_process">Move to in process</button>
+    <button data-message>Generate message</button>
+  `;
+}
+
+function propertyCard(property) {
+  const article = document.createElement("article");
+  article.className = "property-card";
+  article.dataset.id = property.id;
+  article.innerHTML = `
+    <div class="card-topline">
+      <strong class="rent">£${Number(property.rent).toLocaleString("en-GB")} <small>pcm</small></strong>
+      <span class="source">${escapeHtml(formatSource(property.source))}</span>
+    </div>
+    <p class="address">${escapeHtml(property.address)}</p>
+    <div class="property-facts">
+      ${fact(property.bike_minutes, "min cycle")}
+      ${fact(property.bike_distance_km, "km")}
+      ${property.couples_supported ? "<span>Couples supported</span>" : ""}
+      ${property.self_contained ? "<span>Self-contained</span>" : ""}
+    </div>
+    <p class="description">${escapeHtml(property.description)}</p>
+    <div class="card-actions">
+      <a href="${escapeHtml(property.link)}" target="_blank" rel="noopener noreferrer">View advert ↗</a>
+      ${actions(property)}
+    </div>
+  `;
+  article.querySelectorAll("[data-status]").forEach((button) => {
+    button.addEventListener("click", () => updateStatus(property.id, button.dataset.status, button));
   });
+  article.querySelector("[data-message]")?.addEventListener("click", () => {
+    showToast("Message generation will be connected in a later step.");
+  });
+  return article;
+}
+
+function visibleProperties() {
+  const query = state.search.toLowerCase();
+  return state.properties.filter((property) => {
+    if (property.rent > state.maxRent) return false;
+    if (!query) return true;
+    return [property.address, property.description, property.source]
+      .some((value) => String(value ?? "").toLowerCase().includes(query));
+  });
+}
+
+function fill(container, properties, emptyMessage) {
+  container.replaceChildren();
+  if (!properties.length) {
+    const empty = document.createElement("p");
+    empty.className = "empty";
+    empty.textContent = emptyMessage;
+    container.append(empty);
+    return;
+  }
+  properties.forEach((property) => container.append(propertyCard(property)));
+}
+
+function render() {
+  const properties = visibleProperties().sort((a, b) => a.rent - b.rent || a.id.localeCompare(b.id));
+  const fresh = properties.filter((property) => property.status === "new");
+  const couples = fresh.filter((property) => property.couples_supported);
+  const selfContained = fresh.filter(
+    (property) => !property.couples_supported && property.self_contained,
+  );
+  const process = properties.filter((property) => property.status === "in_process");
+  const handled = properties.filter(
+    (property) => property.status === "contacted" || property.status === "ignored",
+  );
+
+  fill(elements.couples, couples, "No new couples-supported properties.");
+  fill(elements.selfContained, selfContained, "No new self-contained properties.");
+  fill(elements.process, process, "Move a property here when you want to pursue it.");
+  fill(elements.handled, handled, "No handled properties.");
+
+  document.querySelector("#couples-count").textContent = couples.length;
+  document.querySelector("#self-contained-count").textContent = selfContained.length;
+  document.querySelector("#process-count").textContent = process.length;
+  document.querySelector("#handled-count").textContent = handled.length;
+  elements.handledSection.classList.toggle("hidden", !state.showHandled);
+}
+
+async function updateStatus(id, status, button) {
+  button.disabled = true;
+  try {
+    const response = await fetch(`/api/properties/${encodeURIComponent(id)}/status`, {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ status }),
+    });
+    if (!response.ok) throw new Error("Status update failed");
+    const property = state.properties.find((item) => item.id === id);
+    property.status = status;
+    render();
+    showToast("Status updated.");
+  } catch {
+    button.disabled = false;
+    showError("The status could not be saved. Please try again.");
+  }
+}
+
+function showError(message) {
+  elements.error.textContent = message;
+  elements.error.classList.remove("hidden");
+}
+
+let toastTimer;
+function showToast(message) {
+  clearTimeout(toastTimer);
+  elements.toast.textContent = message;
+  elements.toast.classList.remove("hidden");
+  toastTimer = setTimeout(() => elements.toast.classList.add("hidden"), 2800);
+}
+
+async function loadProperties() {
+  try {
+    const response = await fetch("/api/properties");
+    if (!response.ok) throw new Error("Properties request failed");
+    const data = await response.json();
+    state.properties = data.properties;
+    document.querySelector("#snapshot-time").textContent =
+      `Updated ${new Date(data.generated_at).toLocaleString("en-GB", {
+        dateStyle: "medium",
+        timeStyle: "short",
+      })}`;
+    render();
+  } catch {
+    showError("The latest housing results could not be loaded.");
+  }
+}
+
+document.querySelector("#search").addEventListener("input", (event) => {
+  state.search = event.target.value.trim();
+  render();
+});
+
+document.querySelector("#rent-filter").addEventListener("change", (event) => {
+  state.maxRent = Number(event.target.value);
+  render();
+});
+
+document.querySelector("#show-handled").addEventListener("click", (event) => {
+  state.showHandled = !state.showHandled;
+  event.currentTarget.textContent = state.showHandled ? "Hide handled" : "Show handled";
+  render();
+});
+
+loadProperties();

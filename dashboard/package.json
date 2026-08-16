@@ -2,10 +2,15 @@
   "name": "housing-dashboard",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=22"
+  },
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",
+    "test": "node --test",
     "deploy": "wrangler deploy",
+    "db:migrate": "wrangler d1 migrations apply housing-dashboard-db --remote",
     "check": "wrangler deploy --dry-run"
   },
   "devDependencies": {
