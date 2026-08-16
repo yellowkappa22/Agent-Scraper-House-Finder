@@ -1,14 +1,15 @@
-const sharedInstructions = `Write one concise, natural enquiry message in British English.
+const sharedInstructions = `Write a brief, natural enquiry in British English. Keep the body under 90 words, excluding the greeting and signature.
 The sender is Kasper Pettersson, moving from Sweden to Oxford to begin a full-time MSc in Statistical Science at the University of Oxford.
-Use the current listing description to make the enquiry feel genuinely specific, but personalise subtly: mention at most one relevant detail when it fits naturally.
-Do not repeat the listing title as a phrase such as “the bright house in Oxford”. Do not repeat or list several flattering details, and avoid estate-agent language such as “sounds like a lovely fit”.
-The examples are style references only. Do not copy their sentences or carry over any property-specific detail from an example.
-Ask whether the accommodation is still available. Do not invent dates, employment, viewing availability, or other personal circumstances.
-Write two or three short paragraphs beginning with “Hi,”. Return only regular plain text without Markdown, headings, bullets, commentary, a subject line, or quotation marks.
+Personalisation is optional. If used, write one simple, general sentence of no more than 15 words.
+Good style: “The home looks comfortable, and the garden appeals to us.” or “The home looks cosy, and the location suits us well.”
+Do not repeat or list several flattering details. Never paraphrase room layouts or chain advert features together. Never write phrases such as “particularly caught our attention”, “keen to make this our home”, or repeat the listing title.
+The examples are tone references only. The shorter rules above override their length and wording.
+Ask whether the accommodation is still available. Do not invent dates, employment, viewing availability, or other circumstances.
+Begin with “Hi,” and use two short body paragraphs. Return only regular plain text without Markdown, headings, bullets, commentary, a subject line, or quotation marks.
 End every message exactly with:
 Best regards,
 Kasper Pettersson`;
-export const couplesPrompt = `${sharedInstructions}\n\nIntroduce the sender and clearly explain that their partner will move in with them. Express genuine interest in the accommodation.`;
+export const couplesPrompt = `${sharedInstructions}\n\nIntroduce the sender and clearly say that their partner will move in with them. Express interest simply, without overselling.`;
 
 export const selfContainedPrompt = `${sharedInstructions}\n\nIntroduce the sender and express genuine interest in the accommodation. Do not mention a partner or couple.`;
 

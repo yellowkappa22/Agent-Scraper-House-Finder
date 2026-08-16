@@ -76,6 +76,8 @@ test("message generation sends trusted Gold content to GPT-5.6 Luna", async () =
   assert.equal(response.status, 200);
   assert.equal(request.url, "https://api.openai.com/v1/responses");
   assert.equal(request.body.model, "gpt-5.6-luna");
+  assert.deepEqual(request.body.text, { verbosity: "low" });
+  assert.equal(request.body.max_output_tokens, 220);
   assert.match(request.body.input, /Room in Headington/);
   assert.match(request.body.input, /Sunny room near the park/);
   assert.equal(request.init.headers.authorization, "Bearer test-secret");
@@ -103,4 +105,11 @@ test("message instructions require a natural enquiry and exact signature", () =>
   assert.ok(instructions.includes(`End every message exactly with:
 Best regards,
 Kasper Pettersson`));
+});
+
+test("message instructions constrain personalisation to one short general sentence", () => {
+  const instructions = messageInstructions({ couples_supported: true, self_contained: false });
+  assert.match(instructions, /Keep the body under 90 words/);
+  assert.match(instructions, /one simple, general sentence of no more than 15 words/);
+  assert.match(instructions, /Never paraphrase room layouts or chain advert features together/);
 });

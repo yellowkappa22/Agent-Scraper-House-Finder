@@ -148,7 +148,8 @@ async function generateMessage(env, propertyId, fetchImpl = fetch) {
     body: JSON.stringify({
       model: "gpt-5.6-luna",
       reasoning: { effort: "low" },
-      max_output_tokens: 350,
+      text: { verbosity: "low" },
+      max_output_tokens: 220,
       instructions,
       input: listing,
     }),
