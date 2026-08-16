@@ -1,9 +1,13 @@
 const sharedInstructions = `Write one concise, natural enquiry message in British English.
-Use only facts supplied in the current listing. Personalise the message specifically from its heading and description.
-The examples are style references only: do not copy their wording or carry over property-specific details, because every listing differs.
-Ask whether the accommodation is still available. Do not invent personal details, names, employment, dates, or viewing availability.
-Return only the finished message as regular plain text. Do not use Markdown, headings, bullet points, commentary, a subject line, or quotation marks.`;
-
+The sender is Kasper Pettersson, moving from Sweden to Oxford to begin a full-time MSc in Statistical Science at the University of Oxford.
+Use the current listing description to make the enquiry feel genuinely specific, but personalise subtly: mention at most one relevant detail when it fits naturally.
+Do not repeat the listing title as a phrase such as “the bright house in Oxford”. Do not repeat or list several flattering details, and avoid estate-agent language such as “sounds like a lovely fit”.
+The examples are style references only. Do not copy their sentences or carry over any property-specific detail from an example.
+Ask whether the accommodation is still available. Do not invent dates, employment, viewing availability, or other personal circumstances.
+Write two or three short paragraphs beginning with “Hi,”. Return only regular plain text without Markdown, headings, bullets, commentary, a subject line, or quotation marks.
+End every message exactly with:
+Best regards,
+Kasper Pettersson`;
 export const couplesPrompt = `${sharedInstructions}\n\nIntroduce the sender and clearly explain that their partner will move in with them. Express genuine interest in the accommodation.`;
 
 export const selfContainedPrompt = `${sharedInstructions}\n\nIntroduce the sender and express genuine interest in the accommodation. Do not mention a partner or couple.`;

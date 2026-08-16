@@ -89,6 +89,16 @@ async function setStatus(request, env, propertyId) {
   return json({ id: propertyId, status: body.status, updated_at: updatedAt });
 }
 
+const SIGNATURE = "Best regards,\nKasper Pettersson";
+
+function ensureSignature(message) {
+  const body = message
+    .trim()
+    .replace(/\n*Best regards,?\s*(?:\n[^\n]+)?\s*$/i, "")
+    .trimEnd();
+  return `${body}\n\n${SIGNATURE}`;
+}
+
 function responseText(response) {
   if (typeof response.output_text === "string" && response.output_text.trim()) {
     return response.output_text.trim();
@@ -146,7 +156,7 @@ async function generateMessage(env, propertyId, fetchImpl = fetch) {
   if (!openaiResponse.ok) throw new Error(`OpenAI request failed: ${openaiResponse.status}`);
   const message = responseText(await openaiResponse.json());
   if (!message) throw new Error("OpenAI returned an empty message");
-  return json({ message });
+  return json({ message: ensureSignature(message) });
 }
 
 export default {

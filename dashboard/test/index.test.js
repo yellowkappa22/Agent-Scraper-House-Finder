@@ -79,7 +79,7 @@ test("message generation sends trusted Gold content to GPT-5.6 Luna", async () =
   assert.match(request.body.input, /Room in Headington/);
   assert.match(request.body.input, /Sunny room near the park/);
   assert.equal(request.init.headers.authorization, "Bearer test-secret");
-  assert.deepEqual(await response.json(), { message: "Hello, is this still available?" });
+  assert.deepEqual(await response.json(), { message: "Hello, is this still available?\n\nBest regards,\nKasper Pettersson" });
 });
 
 test("message generation rejects unknown properties before calling OpenAI", async () => {
@@ -95,4 +95,12 @@ test("message generation rejects unknown properties before calling OpenAI", asyn
     throw new Error("OpenAI should not be called");
   });
   assert.equal(response.status, 404);
+});
+
+test("message instructions require a natural enquiry and exact signature", () => {
+  const instructions = messageInstructions({ couples_supported: true, self_contained: false });
+  assert.match(instructions, /Do not repeat or list several flattering details/);
+  assert.ok(instructions.includes(`End every message exactly with:
+Best regards,
+Kasper Pettersson`));
 });
