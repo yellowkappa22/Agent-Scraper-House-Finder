@@ -13,7 +13,8 @@
       "single occupancy",
       "single occupant",
       "one person only",
-      "couples not"
+      "couples not",
+      "Maximum number of tenants is 1"
     ]
   },
   "self_contained": {

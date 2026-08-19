@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 from collections.abc import Sequence
 
-SCRAPERS = ("dailyinfo", "finders", "onthemarket", "spareroom")
+SCRAPERS = ("dailyinfo", "finders", "onthemarket", "rightmove", "scottfraser", "spareroom", "taylors")
 COMMANDS = (*SCRAPERS, "enrich-bike", "filter-results", "export-dashboard", "pipeline", "refresh-all")
 
 
@@ -31,8 +31,17 @@ def main(argv: Sequence[str] | None = None) -> int:
     elif args.scraper == "onthemarket":
         from house_scrapers.scrapers.onthemarket import run
         run()
+    elif args.scraper == "rightmove":
+        from house_scrapers.scrapers.rightmove import run
+        run()
+    elif args.scraper == "scottfraser":
+        from house_scrapers.scrapers.scottfraser import run
+        run()
     elif args.scraper == "spareroom":
         from house_scrapers.scrapers.spareroom import run
+        run()
+    elif args.scraper == "taylors":
+        from house_scrapers.scrapers.taylors import run
         run()
     elif args.scraper == "enrich-bike":
         from house_scrapers.enrichment import run

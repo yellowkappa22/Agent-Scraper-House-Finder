@@ -62,6 +62,24 @@ SCRAPER_CONFIG = {
         excluded_locations=_locations(),
         mode=os.getenv("DAILYINFO_MODE", "scrape_new_today"),
     ),
+    "rightmove": ScraperConfig(
+        max_rent=int(os.getenv("RIGHTMOVE_MAX_RENT", "1200")),
+        headless=False,
+        excluded_locations=_locations(),
+        mode=os.getenv("RIGHTMOVE_MODE", "scrape_new_today"),
+    ),
+    "scottfraser": ScraperConfig(
+        max_rent=int(os.getenv("SCOTTFRASER_MAX_RENT", "1200")),
+        headless=False,
+        excluded_locations=_locations(),
+        mode=os.getenv("SCOTTFRASER_MODE", "scrape_new_today"),
+    ),
+    "taylors": ScraperConfig(
+        max_rent=int(os.getenv("TAYLORS_MAX_RENT", "1200")),
+        headless=False,
+        excluded_locations=_locations(),
+        mode=os.getenv("TAYLORS_MODE", "scrape_new_today"),
+    ),
     "spareroom": ScraperConfig(
         max_rent=int(os.getenv("SPAREROOM_MAX_RENT", "1200")),
         headless=_boolean("SPAREROOM_HEADLESS"),

@@ -46,6 +46,9 @@ function formatSource(source) {
     dailyinfo: "Daily Info",
     finders: "Finders",
     onthemarket: "OnTheMarket",
+    rightmove: "Rightmove",
+    scottfraser: "Scott Fraser",
+    taylors: "Taylors",
     spareroom: "SpareRoom",
   }[source] ?? source;
 }

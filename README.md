@@ -1,6 +1,6 @@
 # House Scrapers
 
-A minimal Python repository for independent, website-specific housing scrapers. The Finders, OnTheMarket, Daily Info, and SpareRoom scrapers collect Oxfordshire rentals below a configured monthly rent and record their full descriptions in Azure Blob Storage.
+A minimal Python repository for independent, website-specific housing scrapers. The Daily Info, Finders, OnTheMarket, Rightmove, Scott Fraser, SpareRoom, and Taylors scrapers collect Oxfordshire rentals below a configured monthly rent and record their full descriptions in Azure Blob Storage.
 
 ## Structure
 
@@ -17,7 +17,10 @@ src/house_scrapers/
   scrapers/dailyinfo.py   # Daily Info-specific implementation
   scrapers/finders.py     # Finders-specific implementation
   scrapers/onthemarket.py # OnTheMarket-specific implementation
+  scrapers/rightmove.py   # Rightmove-specific implementation
+  scrapers/scottfraser.py # Scott Fraser-specific implementation
   scrapers/spareroom.py   # SpareRoom-specific implementation
+  scrapers/taylors.py    # Taylors-specific implementation
 tests/unit/               # deterministic tests; no network/browser
 tests/live/               # opt-in website smoke tests
 ```
@@ -41,7 +44,7 @@ On Linux, Playwright may need system packages. If absent, run `python -m playwri
 
 The scraper uses `DefaultAzureCredential` to access each scraper's JSON blob in the `scraping-results` container of the `ykhousingstorage` account. On the Azure VM this uses its system-assigned managed identity. No account keys, SAS tokens, connection strings, or client secrets are supported. The identity needs the Storage Blob Data Contributor role.
 
-All scraper filters and runtime options are indexed in `src/house_scrapers/config.py`. Local values are read automatically from the ignored `.env` file. Each scraper has `<NAME>_MAX_RENT` and `<NAME>_HEADLESS` settings. `EXCLUDED_LOCATIONS` is a shared comma-separated list. `DAILYINFO_MODE`, `FINDERS_MODE`, `ONTHEMARKET_MODE`, and `SPAREROOM_MODE` accept `scrape_new_today` or `scrape_all`. All rent limits default to `1200`; the comparison is strict, so a £1,200 listing is not saved. Weekly prices are converted with `weekly × 52 ÷ 12`. Variables already exported by the process take precedence over `.env`.
+All scraper filters and runtime options are indexed in `src/house_scrapers/config.py`. Local values are read automatically from the ignored `.env` file. Each scraper has `<NAME>_MAX_RENT` and `<NAME>_HEADLESS` settings. `EXCLUDED_LOCATIONS` is a shared comma-separated list. each `<NAME>_MODE` accept `scrape_new_today` or `scrape_all`. All rent limits default to `1200`; the comparison is strict, so a £1,200 listing is not saved. Weekly prices are converted with `weekly × 52 ÷ 12`. Variables already exported by the process take precedence over `.env`.
 
 Bicycle-route enrichment requires `OPENROUTE_API_KEY=your-key` in
 `.env`. Hyphens are valid inside the value and do not require quotes;
@@ -61,8 +64,11 @@ The intake stage deliberately does not filter house shares, couples, or eligibil
 ```bash
 python -m house_scrapers finders
 python -m house_scrapers onthemarket
+python -m house_scrapers rightmove
+python -m house_scrapers scottfraser
 python -m house_scrapers dailyinfo
 python -m house_scrapers spareroom
+python -m house_scrapers taylors
 python -m house_scrapers enrich-bike
 python -m house_scrapers filter-results
 python -m house_scrapers export-dashboard
@@ -70,7 +76,7 @@ python -m house_scrapers pipeline
 python -m house_scrapers refresh-all
 ```
 
-The enrichment command reads active records from all four Bronze property blobs
+The enrichment command reads active records from all seven Bronze property blobs
 without deleting their history and replaces the Silver snapshot at
 `enriched/properties.json`. Its `enrichment`
 object contains the coordinate source plus cycling distance and duration to the
@@ -85,7 +91,7 @@ a positive match. A short `*_reason` records the decisive metadata field or
 phrase. This is deterministic and does not use an LLM or a paid classification
 API.
 
-`pipeline` runs all four scrapers sequentially, followed by Silver enrichment
+`pipeline` runs all seven scrapers sequentially, followed by Silver enrichment
 and Gold filtering. If any stage fails, the command exits non-zero and later
 stages do not publish partial data. This is the command intended for the hourly
 systemd service and timer.
@@ -181,7 +187,7 @@ generation and validation succeed.
 
 Use `python -m house_scrapers --list` to list scrapers. Accepted properties are written to the Bronze blobs at `<scraper>/properties.json`; existing registered listings are skipped. Every stored record has an `archived` UTC ISO-8601 timestamp. A complete `scrape_all` refresh also maintains `active`, `last_seen`, and `inactive_at` without deleting historical records. Partial `scrape_new_today` runs never deactivate unseen records.
 
-DailyInfo, Finders, OnTheMarket, and SpareRoom use Requests rather than a browser. Finders reads Homeflow JSON embedded in the initial page and follows its JSON search endpoint. Their default `scrape_new_today` mode checks featured cards and the current date group; run a complete active-results import with `<NAME>_MODE=scrape_all`. DailyInfo prefers the full postcode embedded in its Leaflet script and formats addresses as `header — postcode`, falling back to the displayed area when no map was supplied.
+All seven scrapers use Requests rather than a browser. Finders and Taylors use Homeflow JSON endpoints; Rightmove and Scott Fraser parse structured JSON embedded in server-rendered pages. Their default `scrape_new_today` mode checks featured cards and the current date group; run a complete active-results import with `<NAME>_MODE=scrape_all`. DailyInfo prefers the full postcode embedded in its Leaflet script and formats addresses as `header — postcode`, falling back to the displayed area when no map was supplied.
 
 Every saved Finders offer includes `metadata.source: "finders"`, full postcode and coordinates, creation time, and responsible branch contact details. Its addresses use `property title — full address`.
 

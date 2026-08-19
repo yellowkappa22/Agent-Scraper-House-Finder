@@ -19,6 +19,9 @@ RAW_BLOBS = (
     "dailyinfo/properties.json",
     "finders/properties.json",
     "onthemarket/properties.json",
+    "rightmove/properties.json",
+    "scottfraser/properties.json",
+    "taylors/properties.json",
     "spareroom/properties.json",
 )
 ENRICHED_BLOB = "enriched/properties.json"

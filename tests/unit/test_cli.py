@@ -3,7 +3,7 @@ from house_scrapers.__main__ import main
 
 def test_list_scrapers(capsys):
     assert main(["--list"]) == 0
-    assert capsys.readouterr().out == "dailyinfo\nfinders\nonthemarket\nspareroom\n"
+    assert capsys.readouterr().out == "dailyinfo\nfinders\nonthemarket\nrightmove\nscottfraser\nspareroom\ntaylors\n"
 
 
 def test_pipeline_command(monkeypatch):

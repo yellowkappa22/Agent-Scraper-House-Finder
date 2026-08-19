@@ -54,5 +54,5 @@ def test_full_refresh_sets_every_scraper_to_scrape_all(monkeypatch):
     assert calls == ["run"]
     assert all(
         __import__("os").environ[f"{name}_MODE"] == "scrape_all"
-        for name in ("DAILYINFO", "FINDERS", "ONTHEMARKET", "SPAREROOM")
+        for name in ("DAILYINFO", "FINDERS", "ONTHEMARKET", "RIGHTMOVE", "SCOTTFRASER", "SPAREROOM", "TAYLORS")
     )
